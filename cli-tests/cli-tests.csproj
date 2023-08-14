@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <RootNamespace>OxceToolsTests</RootNamespace>
-
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>

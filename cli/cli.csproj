@@ -3,7 +3,6 @@
   <PropertyGroup>
     <RootNamespace>OxceTools</RootNamespace>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
 </Project>
