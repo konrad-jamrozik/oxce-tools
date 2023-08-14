@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\Directory.Build.props = ..\Directory.Build.props
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cli-tests", "..\cli-tests\cli-tests.csproj", "{3429405E-10A6-4CF8-86BB-9E61B8937FEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{E028DB4F-18DF-4317-A537-27176C728A5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E028DB4F-18DF-4317-A537-27176C728A5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E028DB4F-18DF-4317-A537-27176C728A5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3429405E-10A6-4CF8-86BB-9E61B8937FEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3429405E-10A6-4CF8-86BB-9E61B8937FEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3429405E-10A6-4CF8-86BB-9E61B8937FEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3429405E-10A6-4CF8-86BB-9E61B8937FEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
