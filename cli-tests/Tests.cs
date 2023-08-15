@@ -10,36 +10,28 @@ public class Tests
     {
     }
 
+    /// <summary>
+    /// Proof-of-concept showing round-tripping save file after making modification to it.
+    /// </summary>
     [Test]
     public void TestModifySaveFile()
     {
-        // Proof-of-concept showing round-tripping save file after making modification to it.
-
-        string homeDrive = Environment.GetEnvironmentVariable("HOMEDRIVE")!;
-        string homePath = Environment.GetEnvironmentVariable("HOMEPATH")!;
-        string saveFilePath = Path.GetFullPath($"{homeDrive}{homePath}/OneDrive/Documents/OpenXcom/x-com-files/toprocess.sav");
-        string modifiedSaveFilePath = Path.GetFullPath($"{homeDrive}{homePath}/OneDrive/Documents/OpenXcom/x-com-files/toprocess_modified.sav");
-        
-        Console.Out.WriteLine("saveFilePath: " + Path.GetFullPath(saveFilePath));
         var stopwatch = Stopwatch.StartNew();
-        string saveFileContents = File.ReadAllText(saveFilePath);
-        // Apparently this header delimiter "---" in the save file is not a valid yaml.
+        var saveDir = new SaveDir();
+        Console.Out.WriteLine($"Reading and deserializing save file from {saveDir.SaveFilePath}");
+        
+        string saveFileContents = File.ReadAllText(saveDir.SaveFilePath);
+        
+        // The save file has a header delimiter "---" that is not a valid yaml, hence we need to remove it (and later 
+        // on add it back.
         saveFileContents = saveFileContents.Replace("---", "");
-        Console.Out.WriteLine("Time to read: " + stopwatch.Elapsed);
-        stopwatch.Restart();
+        Console.Out.WriteLine("Time until read: " + stopwatch.Elapsed);
 
-        var yamlDeserializer = new DeserializerBuilder().Build();
-        Dictionary<object, object> yaml = (Dictionary<object, object>)yamlDeserializer.Deserialize(saveFileContents)!;
+        Dictionary<object, object> yaml = Deserialize(saveFileContents);
 
-        Console.Out.WriteLine("Time to deserialize to yaml: " + stopwatch.Elapsed);
+        Console.Out.WriteLine($"Time until yaml: {stopwatch.Elapsed}");
 
-        yaml["name"] = "toprocess_MODIFIED";
-
-        var fundsNode = (List<object>)yaml["funds"];
-
-        // The modification
-        // $$$
-        fundsNode[0] = "11000000";
+        yaml["name"] += "_MODIFIED";
 
         List<object> alienMissions = (List<object>)yaml["alienMissions"]!;
 
@@ -52,16 +44,29 @@ public class Tests
             }
         }
 
-        var serializer = new SerializerBuilder().Build();
+        Serialize(yaml, saveDir);
 
-        string modifiedYamlAsString = serializer.Serialize(yaml);
-
-
-        modifiedYamlAsString = modifiedYamlAsString.Replace("difficulty", "---" + Environment.NewLine + "difficulty");
-
-        File.WriteAllText(modifiedSaveFilePath, modifiedYamlAsString);
-
+        Console.Out.WriteLine($"Time until done: {stopwatch.Elapsed}");
         // Assert: the modified save file can be loaded
-        Assert.Pass();
+    }
+
+    private static Dictionary<object, object> Deserialize(string saveFileContents)
+    {
+        var yamlDeserializer = new DeserializerBuilder().Build();
+        Dictionary<object, object> yaml = (Dictionary<object, object>)yamlDeserializer.Deserialize(saveFileContents)!;
+        return yaml;
+    }
+
+    private static void Serialize(Dictionary<object, object> yaml, SaveDir saveDir)
+    {
+        var serializer = new SerializerBuilder().Build();
+        string modifiedSaveFileContents = serializer
+            .Serialize(yaml)
+            .Replace("difficulty", "---" + Environment.NewLine + "difficulty");
+
+
+        Console.Out.WriteLine($"Writing out modified contents to {saveDir.ModifiedSaveFilePath}");
+        File.WriteAllText(saveDir.ModifiedSaveFilePath, modifiedSaveFileContents);
     }
 }
+
