@@ -1,4 +1,4 @@
-namespace OxceToolsTests;
+namespace OxceTools;
 
 public class SaveMetadata
 {

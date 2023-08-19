@@ -5,4 +5,8 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="13.2.0" />
+  </ItemGroup>
+
 </Project>

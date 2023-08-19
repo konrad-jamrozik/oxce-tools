@@ -15,4 +15,8 @@
     <PackageReference Include="YamlDotNet" Version="13.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\cli\cli.csproj" />
+  </ItemGroup>
+
 </Project>

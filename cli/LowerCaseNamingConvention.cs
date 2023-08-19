@@ -1,6 +1,6 @@
 using YamlDotNet.Serialization;
 
-namespace OxceToolsTests;
+namespace OxceTools;
 
 public class LowerCaseNamingConvention : INamingConvention
 {

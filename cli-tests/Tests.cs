@@ -1,7 +1,9 @@
+using OxceTools;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using LowerCaseNamingConvention = OxceTools.LowerCaseNamingConvention;
 
 namespace OxceToolsTests;
 
@@ -11,7 +13,6 @@ public class Tests
     public void Setup()
     {
     }
-
 
     /// <summary>
     /// Proof-of-concept of round-trip deserialization-modification-serialization of a save file,
