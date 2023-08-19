@@ -29,10 +29,23 @@ public class Tests
     {
         var dirs = new Dirs();
         var saveFile = new SaveFile(dirs);
+        (SaveMetadata _, SaveData data) = saveFile.Deserialize();
+        
+        var missionDataFile = new MissionDataFile(dirs);
+
+        // Act
+        missionDataFile.WriteFrom(data);
+    }
+
+    [Test]
+    public void UpdatesSaveFileFromMissionDataFile()
+    {
+        // kja todo
+        var saveFile = new SaveFile(new Dirs());
 
         (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
 
-        SaveMissionDataToCsv(dirs, data);
+        ModifySaveFile(data);
 
         saveFile.Serialize(metadata, data);
     }
@@ -67,10 +80,10 @@ public class Tests
 
         (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
 
-        var alienMissions = LoadMissionDataFromCsv(dirs);
+        AlienMissions alienMissions = LoadMissionDataFromCsv(dirs);
         int alienMissionsCount = alienMissions.Count;
 
-        var missionsToLoad = alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
+        List<AlienMission> missionsToLoad = alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
 
         int deletedMissionsCount = alienMissionsCount - missionsToLoad.Count;
 
@@ -95,23 +108,6 @@ public class Tests
         {
             alienMission.SpawnCountdown = 60;
         }
-    }
-
-    private void SaveMissionDataToCsv(Dirs dirs, SaveData data)
-    {
-        var stringBuilder = new StringBuilder();
-
-        var alienMissions = data.AlienMissions;
-        if (!alienMissions.Any())
-            return;
-
-
-        stringBuilder.AppendLine((alienMissions[0] as ICsvFile).CsvHeader());
-        foreach (AlienMission alienMission in alienMissions)
-            stringBuilder.AppendLine((alienMission as ICsvFile).CsvRow());
-
-        Console.Out.WriteLine($"Writing out csv data to {dirs.MissionDataCsvFilePath}");
-        File.WriteAllText(dirs.MissionDataCsvFilePath, stringBuilder.ToString());
     }
 
     private AlienMissions LoadMissionDataFromCsv(Dirs dirs)
