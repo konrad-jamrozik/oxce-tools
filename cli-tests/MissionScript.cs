@@ -32,11 +32,11 @@ public class MissionScript : ICsvFile
     public required int ExecutionOdds;
     public required object MissionWeights;
     public required object RegionWeights;
+    public required List<int> Conditionals;
     public required Dictionary<string, bool> ResearchTriggers;
     public required object MaxRuns;
     public required object Label;
     public required object VarName;
-    public required List<int> Conditionals;
     public required object RaceWeights;
     public required object StartDelay;
     public required object RandomDelay;

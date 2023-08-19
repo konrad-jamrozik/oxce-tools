@@ -24,7 +24,8 @@ public class SaveData
     public required object GlobeLon;
     public required object GlobeLat;
     public required object GlobeZoom;
-    public required object Ids;
+    // ReSharper disable once UnassignedField.Global
+    public required Dictionary<string, int> Ids;
     public required object Countries;
     public required object Regions;
     public required object Bases;

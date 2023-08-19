@@ -37,6 +37,7 @@ public class Tests
         saveFile.Serialize(metadata, data);
     }
 
+
     [Test]
     public void SaveMissionScriptsDataToCsv()
     {
@@ -56,6 +57,41 @@ public class Tests
 
         SaveMissionScriptsDataToCsv(dirs, missionScripts);
         Assert.Pass();
+    }
+
+    [Test]
+    public void UpdateSaveFromMissionData()
+    {
+        var dirs = new Dirs();
+        var saveFile = new SaveFile(dirs);
+
+        (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
+
+        var alienMissions = LoadMissionDataFromCsv(dirs);
+        int alienMissionsCount = alienMissions.Count;
+
+        var missionsToDelete = alienMissions.Where(mission => mission.Delete == "1").ToList();
+
+        var remainingMissions = alienMissions.Where(
+            mission => missionsToDelete.All(missionToDel => missionToDel.UniqueID != mission.UniqueID)).ToList();
+
+        int deletedMissionsCount = alienMissionsCount - remainingMissions.Count();
+
+        if (deletedMissionsCount != missionsToDelete.Count)
+            Console.Out.WriteLine(
+                $"Something went wrong with deletion. missionsToDelete: {missionsToDelete.Count}, deletedMissions: {deletedMissionsCount}");
+
+        data.Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
+
+        int currentMinId = remainingMissions.Min(mission => mission.UniqueID);
+        int missionIdIterator = currentMinId;
+
+        remainingMissions.OrderBy(mission => mission.UniqueID).ToList()
+            .ForEach(mission => mission.UniqueID = missionIdIterator++);
+
+        data.AlienMissions = new AlienMissions(remainingMissions);
+        
+        saveFile.Serialize(metadata, data);
     }
 
     private static void ModifySaveFile(SaveData data)
@@ -81,6 +117,16 @@ public class Tests
 
         Console.Out.WriteLine($"Writing out csv data to {dirs.MissionDataCsvFilePath}");
         File.WriteAllText(dirs.MissionDataCsvFilePath, stringBuilder.ToString());
+    }
+
+    private AlienMissions LoadMissionDataFromCsv(Dirs dirs)
+    {
+        var lines = File.ReadAllLines(dirs.MissionDataCsvFilePath)
+            // Skip the CSV header
+            .Skip(1);
+        IEnumerable<AlienMission> alienMissions = lines.Select(
+            line => AlienMission.FromCsvRow(line.Split(",")));
+        return new AlienMissions(alienMissions);
     }
 
     private void SaveMissionScriptsDataToCsv(Dirs dirs, List<MissionScript> missionScripts)
