@@ -80,7 +80,7 @@ public class Tests
 
         (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
 
-        AlienMissions alienMissions = LoadMissionDataFromCsv(dirs);
+        AlienMissions alienMissions = new MissionDataFile(dirs).Read();
         int alienMissionsCount = alienMissions.Count;
 
         List<AlienMission> missionsToLoad = alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
@@ -108,16 +108,6 @@ public class Tests
         {
             alienMission.SpawnCountdown = 60;
         }
-    }
-
-    private AlienMissions LoadMissionDataFromCsv(Dirs dirs)
-    {
-        var lines = File.ReadAllLines(dirs.MissionDataCsvFilePath)
-            // Skip the CSV header
-            .Skip(1);
-        IEnumerable<AlienMission> alienMissions = lines.Select(
-            line => AlienMission.FromCsvRow(line.Split(",")));
-        return new AlienMissions(alienMissions);
     }
 
     private void SaveMissionScriptsDataToCsv(Dirs dirs, List<MissionScript> missionScripts)
