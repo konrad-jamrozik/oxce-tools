@@ -1,6 +1,8 @@
+using System.Diagnostics;
+using MoreLinq;
+
 namespace OxceTools;
 
-// ReSharper disable once ClassNeverInstantiated.Global
 public class SaveData
 {
     public required object Difficulty;
@@ -29,8 +31,6 @@ public class SaveData
     public required object Countries;
     public required object Regions;
     public required object Bases;
-    // ReSharper disable once CollectionNeverUpdated.Global
-    // ReSharper disable once UnassignedField.Global
     public required AlienMissions AlienMissions;
     public required object GeoscapeEvents;
     public required object GeneratedEvents;
@@ -45,24 +45,40 @@ public class SaveData
 
     public void Update(AlienMissions alienMissions)
     {
-        int alienMissionsCount = alienMissions.Count;
-
         List<AlienMission> missionsToInclude =
             alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
 
-        int deletedMissionsCount = alienMissionsCount - missionsToInclude.Count;
-
-        Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
-
-        int currentMinId = alienMissions.Min(mission => mission.UniqueID);
-        int missionIdIterator = currentMinId;
-
-        // kja bucket missions by time, then redo the IDs in timeline order
-
-        missionsToInclude.OrderBy(mission => mission.UniqueID).ToList()
-            .ForEach(mission => mission.UniqueID = missionIdIterator++);
+        missionsToInclude = ShuffleInTime(missionsToInclude);
+        UpdateMissionIds(missionsToInclude, alienMissions);
 
         AlienMissions = new AlienMissions(missionsToInclude);
     }
 
+    private static List<AlienMission> ShuffleInTime(List<AlienMission> missionsToInclude)
+    {
+        int missionsCount = missionsToInclude.Count;
+        int totalMinutes = 60 * 24 * 30; // 43200
+        int intervalSize = totalMinutes / missionsCount;
+
+        var random = new Random();
+        int[] spawnCountdowns = new int[missionsCount];
+        for (int i = 0; i < missionsCount; i++)
+            spawnCountdowns[i] = i * intervalSize + random.Next(intervalSize);
+
+        var shuffledSpawnCountdowns = spawnCountdowns.Shuffle(random).Shuffle().ToArray();
+        Debug.Assert(missionsToInclude.Count == shuffledSpawnCountdowns.Length);
+        missionsToInclude.ForEach((mission, i) => mission.SpawnCountdown = shuffledSpawnCountdowns[i]);
+        return missionsToInclude.OrderBy(mission => mission.SpawnCountdown).ToList();
+    }
+
+    private void UpdateMissionIds(List<AlienMission> missionsToInclude, AlienMissions alienMissions)
+    {
+        int alienMissionsCount = alienMissions.Count;
+        int deletedMissionsCount = alienMissionsCount - missionsToInclude.Count;
+        Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
+
+        int currentMinId = alienMissions.Min(mission => mission.UniqueID);
+        int missionIdIterator = currentMinId;
+        missionsToInclude.ForEach(mission => mission.UniqueID = missionIdIterator++);
+    }
 }
