@@ -28,19 +28,12 @@ public class Tests
     public void SavesMissionDataToCsv()
     {
         var dirs = new Dirs();
-        var saveFile = new SaveFile(dirs);
-        (SaveMetadata _, SaveData data) = saveFile.Deserialize();
-        
-        var missionDataFile = new MissionDataFile(dirs);
-
-        // Act
-        missionDataFile.WriteFrom(data);
+        SavesMissionDataToCsv(dirs.SaveFilePath, dirs.MissionDataCsvFilePath);
     }
 
     [Test]
     public void UpdatesSaveFileFromMissionDataFile()
     {
-        // kja todo
         var dirs = new Dirs();
         var saveFile = new SaveFile(dirs);
 
@@ -48,6 +41,13 @@ public class Tests
         AlienMissions alienMissions = new MissionDataFile(dirs).Read();
         data.Update(alienMissions);
         saveFile.Serialize(metadata, data);
+    }
+
+    [Test]
+    public void SavesModifiedSaveMissionDataToCsv()
+    {
+        var dirs = new Dirs();
+        SavesMissionDataToCsv(dirs.ModifiedSaveFilePath, dirs.ModifiedMissionDataCsvFilePath);
     }
 
     [Test]
@@ -77,6 +77,18 @@ public class Tests
         {
             alienMission.SpawnCountdown = 60;
         }
+    }
+
+    private void SavesMissionDataToCsv(string saveFilePath, string missionDataCsvFilePath)
+    {
+        var dirs = new Dirs();
+        var saveFile = new SaveFile(saveFilePath, dirs.ModifiedSaveFilePath);
+        (SaveMetadata _, SaveData data) = saveFile.Deserialize();
+        
+        var missionDataFile = new MissionDataFile(missionDataCsvFilePath);
+
+        // Act
+        missionDataFile.WriteFrom(data);
     }
 
     private void SaveMissionScriptsDataToCsv(Dirs dirs, List<MissionScript> missionScripts)

@@ -18,6 +18,7 @@ public class Dirs
         SaveFilePath = Path.GetFullPath($"{saveDir}/toprocess.sav");
         ModifiedSaveFilePath = Path.GetFullPath($"{saveDir}/toprocess_MODIFIED.sav");
         MissionDataCsvFilePath = Path.GetFullPath($"{outputDir}/mission_data.csv");
+        ModifiedMissionDataCsvFilePath = Path.GetFullPath($"{outputDir}/mission_data_MODIFIED.csv");
         MissionScriptsDataCsvFilePath = Path.GetFullPath($"{outputDir}/mission_scripts_data.csv");
         MissionScriptsPath = $"{xcfPath}/Ruleset/missionScripts_XCOMFILES_orig.rul";
     }
@@ -25,6 +26,7 @@ public class Dirs
     public string SaveFilePath { get; }
     public string ModifiedSaveFilePath { get; }
     public string MissionDataCsvFilePath { get; }
+    public string ModifiedMissionDataCsvFilePath { get; }
     public string MissionScriptsDataCsvFilePath { get; }
     public string MissionScriptsPath { get; }
 }

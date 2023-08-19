@@ -2,8 +2,13 @@ using System.Text;
 
 namespace OxceTools;
 
-public class MissionDataFile(Dirs dirs)
+public class MissionDataFile(string missionDataCsvFilePath)
 {
+    public MissionDataFile(Dirs dirs) : this(dirs.MissionDataCsvFilePath)
+    {
+
+    }
+
     public void WriteFrom(SaveData data)
     {
         var stringBuilder = new StringBuilder();
@@ -16,13 +21,13 @@ public class MissionDataFile(Dirs dirs)
         foreach (AlienMission alienMission in alienMissions)
             stringBuilder.AppendLine((alienMission as ICsvFile).CsvRow());
 
-        Console.Out.WriteLine($"Writing out CSV mission data to {dirs.MissionDataCsvFilePath}");
-        File.WriteAllText(dirs.MissionDataCsvFilePath, stringBuilder.ToString());
+        Console.Out.WriteLine($"Writing out CSV mission data to {missionDataCsvFilePath}");
+        File.WriteAllText(missionDataCsvFilePath, stringBuilder.ToString());
     }
 
     public AlienMissions Read()
     {
-        var lines = File.ReadAllLines(dirs.MissionDataCsvFilePath)
+        var lines = File.ReadAllLines(missionDataCsvFilePath)
             // Skip the CSV header
             .Skip(1);
         IEnumerable<AlienMission> alienMissions = lines.Select(

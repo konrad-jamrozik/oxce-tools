@@ -6,8 +6,13 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace OxceTools;
 
-public class SaveFile(Dirs dirs)
+public class SaveFile(string saveFilePath, string modifiedSaveFilePath)
 {
+    public SaveFile(Dirs dirs) : this(dirs.SaveFilePath, dirs.ModifiedSaveFilePath)
+    {
+
+    }
+
     /// <summary>
     /// Implementation based on:
     /// https://stackoverflow.com/questions/50788277/why-3-dashes-hyphen-in-yaml-file
@@ -15,7 +20,9 @@ public class SaveFile(Dirs dirs)
     /// </summary>
     public (SaveMetadata metadata, SaveData data) Deserialize()
     {
-        string saveFileContents = File.ReadAllText(dirs.SaveFilePath);
+        Console.Out.WriteLine($"Reading save file path {saveFilePath}");
+
+        string saveFileContents = File.ReadAllText(saveFilePath);
 
         var saveFileReader = new StringReader(saveFileContents);
 
@@ -60,7 +67,7 @@ public class SaveFile(Dirs dirs)
 
         string modifiedSaveFileContents = metadata + "---" + Environment.NewLine + data;
 
-        Console.Out.WriteLine($"Writing out save contents to {dirs.ModifiedSaveFilePath}");
-        File.WriteAllText(dirs.ModifiedSaveFilePath, modifiedSaveFileContents);
+        Console.Out.WriteLine($"Writing out save contents to {modifiedSaveFilePath}");
+        File.WriteAllText(modifiedSaveFilePath, modifiedSaveFileContents);
     }
 }
