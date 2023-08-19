@@ -15,9 +15,10 @@ public class Tests
 
     /// <summary>
     /// Proof-of-concept showing round-tripping save file after making modification to it.
+    /// Deserialized to dictionary of objects.
     /// </summary>
     [Test]
-    public void TestModifySaveFile()
+    public void RoundTripsSaveFileWithoutTyping()
     {
         var stopwatch = Stopwatch.StartNew();
         var saveDir = new SaveDir();
@@ -33,61 +34,54 @@ public class Tests
         saveFileContents = saveFileContents.Replace("---", "");
         Console.Out.WriteLine("Time until read: " + stopwatch.Elapsed);
 
-        Dictionary<object, object> yaml = Deserialize(saveFileContents);
+        Dictionary<object, object> dict = DeserializeSaveFileToDict(saveFileContents);
 
         Console.Out.WriteLine($"Time until yaml: {stopwatch.Elapsed}");
 
-        yaml["name"] += "_MODIFIED";
+        dict["name"] += "_MODIFIED";
 
-        List<object> alienMissions = (List<object>)yaml["alienMissions"];
+        List<object> alienMissions = (List<object>)dict["alienMissions"];
 
-        // foreach (Dictionary<object, object> alienMission in alienMissions)
-        // {
-        //     Console.Out.WriteLine("Next alien mission");
-        //     foreach (var keyValuePair in alienMission)
-        //     {
-        //         Console.Out.WriteLine("kvp: " + keyValuePair);
-        //     }
-        // }
+        foreach (Dictionary<object, object> alienMission in alienMissions)
+        {
+            Console.Out.WriteLine("Next alien mission");
+            foreach (var keyValuePair in alienMission)
+            {
+                Console.Out.WriteLine("kvp: " + keyValuePair);
+            }
+        }
 
-        Serialize(yaml, saveDir);
+        Serialize(dict, saveDir);
 
         Console.Out.WriteLine($"Time until done: {stopwatch.Elapsed}");
         // Assert: the modified save file can be loaded
     }
 
-    /// <summary>
-    /// Proof-of-concept showing round-tripping save file after making modification to it.
-    /// </summary>
     [Test]
-    public void TestModifySaveFile2()
+    public void DeserializesSaveFileUsingTypeConverter()
     {
-        var stopwatch = Stopwatch.StartNew();
         var saveDir = new SaveDir();
-        Console.Out.WriteLine($"Reading and deserializing save file from {saveDir.SaveFilePath}");
         
         string saveFileContents = File.ReadAllText(saveDir.SaveFilePath);
         
         saveFileContents = saveFileContents.Replace("---", "");
-        Console.Out.WriteLine("Time until read: " + stopwatch.Elapsed);
 
-        SaveFile saveFile = DeserializeSaveFile(saveFileContents);
+        SaveFile saveFile = DeserializeSaveFileUsingTypeConverter(saveFileContents);
 
-        Console.Out.WriteLine($"Time until yaml: {stopwatch.Elapsed}");
-
-        //List<object> alienMissions = (List<object>)yaml["alienMissions"];
+        Assert.Pass("No exception thrown");
     }
 
-    // Properly handles --- 
-    // Based on:
-    // https://stackoverflow.com/questions/50788277/why-3-dashes-hyphen-in-yaml-file
-    // https://github.com/aaubry/YamlDotNet/wiki/Samples.DeserializingMultipleDocuments
+    /// <summary>
+    /// Proof-of-concept of parsing of both of the yaml documents in save file, separated by ---.
+    ///
+    /// Based on:
+    /// https://stackoverflow.com/questions/50788277/why-3-dashes-hyphen-in-yaml-file
+    /// https://github.com/aaubry/YamlDotNet/wiki/Samples.DeserializingMultipleDocuments
+    /// </summary>
     [Test]
-    public void TestDeserializeSaveFileMetadata()
+    public void ParsesSaveFileDocuments()
     {
-        var stopwatch = Stopwatch.StartNew();
         var saveDir = new SaveDir();
-        Console.Out.WriteLine($"Reading and deserializing save file from {saveDir.SaveFilePath}");
         
         string saveFileContents = File.ReadAllText(saveDir.SaveFilePath);
 
@@ -101,8 +95,12 @@ public class Tests
         parser.Consume<StreamStart>();
 
         parser.Consume<DocumentStart>();
-        var saveMetadata = deserializer.Deserialize<Dictionary<object, object>>(parser);
+        Dictionary<object, object> saveMetadata = deserializer.Deserialize<Dictionary<object, object>>(parser);
+        
+        Console.Out.WriteLine("");
         Console.Out.WriteLine("## Save metadata");
+        Console.Out.WriteLine("");
+
         foreach (var key in saveMetadata.Keys)
         {
             Console.Out.WriteLine(key);
@@ -112,7 +110,11 @@ public class Tests
         parser.Consume<DocumentStart>();
         var saveData = deserializer.Deserialize<Dictionary<object, object>>(parser);
         parser.Consume<DocumentEnd>();
-        Console.Out.WriteLine("## Save metadata");
+
+        Console.Out.WriteLine("");
+        Console.Out.WriteLine("## Save data");
+        Console.Out.WriteLine("");
+
         foreach (var key in saveData.Keys)
         {
             Console.Out.WriteLine(key);
@@ -122,14 +124,14 @@ public class Tests
         Assert.That(parser.Current, Is.Null);
     }
 
-    private static Dictionary<object, object> Deserialize(string saveFileContents)
+    private static Dictionary<object, object> DeserializeSaveFileToDict(string saveFileContents)
     {
         var yamlDeserializer = new DeserializerBuilder().Build();
-        Dictionary<object, object> yaml = (Dictionary<object, object>)yamlDeserializer.Deserialize(saveFileContents)!;
-        return yaml;
+        Dictionary<object, object> dict = (Dictionary<object, object>)yamlDeserializer.Deserialize(saveFileContents)!;
+        return dict;
     }
 
-    private static SaveFile DeserializeSaveFile(string saveFileContents)
+    private static SaveFile DeserializeSaveFileUsingTypeConverter(string saveFileContents)
     {
         var yamlDeserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -141,11 +143,11 @@ public class Tests
         return saveFile;
     }
 
-    private static void Serialize(Dictionary<object, object> yaml, SaveDir saveDir)
+    private static void Serialize(Dictionary<object, object> dict, SaveDir saveDir)
     {
         var serializer = new SerializerBuilder().Build();
         string modifiedSaveFileContents = serializer
-            .Serialize(yaml)
+            .Serialize(dict)
             .Replace("difficulty", "---" + Environment.NewLine + "difficulty");
         
 
