@@ -54,7 +54,7 @@ public class SaveData
         if (shuffleInTime)
             ShuffleInTime(missionsToInclude);
 
-        UpdateMissionIds(missionsToInclude, alienMissions);
+        missionsToInclude = UpdateMissionIds(missionsToInclude, alienMissions);
 
         AlienMissions = new AlienMissions(missionsToInclude);
     }
@@ -80,7 +80,7 @@ public class SaveData
         missionsToInclude.ForEach((mission, i) => mission.SpawnCountdown = shuffledSpawnCountdowns[i]);
     }
 
-    private void UpdateMissionIds(List<AlienMission> missionsToInclude, AlienMissions alienMissions)
+    private List<AlienMission> UpdateMissionIds(List<AlienMission> missionsToInclude, AlienMissions alienMissions)
     {
         // We are about to reset all missions IDs to increase in sequence to remove the gaps 
         // caused by deleted missions. For readability we are ordering the missions by 
@@ -94,5 +94,7 @@ public class SaveData
         int currentMinId = alienMissions.Min(mission => mission.UniqueID);
         int missionIdIterator = currentMinId;
         missionsToInclude.ForEach(mission => mission.UniqueID = missionIdIterator++);
+
+        return missionsToInclude;
     }
 }
