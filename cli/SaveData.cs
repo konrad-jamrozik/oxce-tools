@@ -54,7 +54,7 @@ public class SaveData
 
         Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
 
-        int currentMinId = missionsToInclude.Min(mission => mission.UniqueID);
+        int currentMinId = alienMissions.Min(mission => mission.UniqueID);
         int missionIdIterator = currentMinId;
 
         // kja bucket missions by time, then redo the IDs in timeline order
