@@ -42,4 +42,27 @@ public class SaveData
     public required object CustomRuleCraftDeployments;
     public required object AlienStrategy;
     public required object Options;
+
+    public void Update(AlienMissions alienMissions)
+    {
+        int alienMissionsCount = alienMissions.Count;
+
+        List<AlienMission> missionsToInclude =
+            alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
+
+        int deletedMissionsCount = alienMissionsCount - missionsToInclude.Count;
+
+        Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
+
+        int currentMinId = missionsToInclude.Min(mission => mission.UniqueID);
+        int missionIdIterator = currentMinId;
+
+        // kja bucket missions by time, then redo the IDs in timeline order
+
+        missionsToInclude.OrderBy(mission => mission.UniqueID).ToList()
+            .ForEach(mission => mission.UniqueID = missionIdIterator++);
+
+        AlienMissions = new AlienMissions(missionsToInclude);
+    }
+
 }

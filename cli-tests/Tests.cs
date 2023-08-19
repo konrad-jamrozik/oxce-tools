@@ -13,7 +13,7 @@ public class Tests
     }
 
     [Test]
-    public void RoundTripsSaveFileModification()
+    public void RoundTripsSaveFileWithModification()
     {
         var saveFile = new SaveFile(new Dirs());
 
@@ -25,7 +25,7 @@ public class Tests
     }
 
     [Test]
-    public void SaveMissionDataToCsv()
+    public void SavesMissionDataToCsv()
     {
         var dirs = new Dirs();
         var saveFile = new SaveFile(dirs);
@@ -41,18 +41,17 @@ public class Tests
     public void UpdatesSaveFileFromMissionDataFile()
     {
         // kja todo
-        var saveFile = new SaveFile(new Dirs());
+        var dirs = new Dirs();
+        var saveFile = new SaveFile(dirs);
 
         (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
-
-        ModifySaveFile(data);
-
+        AlienMissions alienMissions = new MissionDataFile(dirs).Read();
+        data.Update(alienMissions);
         saveFile.Serialize(metadata, data);
     }
 
-
     [Test]
-    public void SaveMissionScriptsDataToCsv()
+    public void SavesMissionScriptsDataToCsv()
     {
         var dirs = new Dirs();
 
@@ -70,36 +69,6 @@ public class Tests
 
         SaveMissionScriptsDataToCsv(dirs, missionScripts);
         Assert.Pass();
-    }
-
-    [Test]
-    public void UpdateSaveFromMissionData()
-    {
-        var dirs = new Dirs();
-        var saveFile = new SaveFile(dirs);
-
-        (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
-
-        AlienMissions alienMissions = new MissionDataFile(dirs).Read();
-        int alienMissionsCount = alienMissions.Count;
-
-        List<AlienMission> missionsToLoad = alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
-
-        int deletedMissionsCount = alienMissionsCount - missionsToLoad.Count;
-
-        data.Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
-
-        int currentMinId = missionsToLoad.Min(mission => mission.UniqueID);
-        int missionIdIterator = currentMinId;
-
-        // kja bucket missions by time, then redo the IDs in timeline order
-
-        missionsToLoad.OrderBy(mission => mission.UniqueID).ToList()
-            .ForEach(mission => mission.UniqueID = missionIdIterator++);
-
-        data.AlienMissions = new AlienMissions(missionsToLoad);
-        
-        saveFile.Serialize(metadata, data);
     }
 
     private static void ModifySaveFile(SaveData data)
