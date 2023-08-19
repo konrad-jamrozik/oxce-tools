@@ -1,52 +1,22 @@
-using OxceTools;
+using System.Diagnostics;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-using LowerCaseNamingConvention = OxceTools.LowerCaseNamingConvention;
 
-namespace OxceToolsTests;
+namespace OxceTools;
 
-public class Tests
+public class SaveFile(SaveDir saveDir)
 {
-    [SetUp]
-    public void Setup()
-    {
-    }
-
     /// <summary>
-    /// Proof-of-concept of round-trip deserialization-modification-serialization of a save file,
-    /// where the save file contents is recognized to be two yaml documents and appropriately
-    /// deserialized into two object hierarchies: metadata and data.
-    ///
-    /// Reference:
+    /// Implementation based on:
     /// https://stackoverflow.com/questions/50788277/why-3-dashes-hyphen-in-yaml-file
     /// https://github.com/aaubry/YamlDotNet/wiki/Samples.DeserializingMultipleDocuments
     /// </summary>
-    [Test]
-    public void RoundTripsSaveFileUsingParserAndObjects()
+    public (SaveMetadata metadata, SaveData data) Deserialize()
     {
-        var saveDir = new SaveDir();
-        
         string saveFileContents = File.ReadAllText(saveDir.SaveFilePath);
 
-        (SaveMetadata metadata, SaveData data) = DeserializeSaveFile(saveFileContents);
-
-        ModifySaveFile(data);
-
-        SerializeToSaveFile(metadata, data, saveDir);
-    }
-
-    private static void ModifySaveFile(SaveData data)
-    {
-        foreach (var alienMission in data.AlienMissions)
-        {
-            alienMission.SpawnCountdown = 60;
-        }
-    }
-
-    private static (SaveMetadata metadata, SaveData data) DeserializeSaveFile(string saveFileContents)
-    {
         var saveFileReader = new StringReader(saveFileContents);
 
         var deserializer =
@@ -69,14 +39,17 @@ public class Tests
         parser.Consume<DocumentEnd>();
         parser.Consume<StreamEnd>();
 
-        Assert.That(parser.Current, Is.Null);
+        Debug.Assert(parser.Current == null);
         return (metadata, data);
     }
 
-    private static void SerializeToSaveFile(
+    /// <summary>
+    /// Implementation based on:
+    /// https://github.com/aaubry/YamlDotNet/wiki/Samples.SerializeObjectGraph
+    /// </summary>
+    public void Serialize(
         SaveMetadata metadataObj,
-        SaveData dataObj,
-        SaveDir saveDir)
+        SaveData dataObj)
     {
         var serializer = new SerializerBuilder()
             .WithNamingConvention(LowerCaseNamingConvention.Instance)
@@ -87,7 +60,8 @@ public class Tests
 
         string modifiedSaveFileContents = metadata + "---" + Environment.NewLine + data;
 
-        Console.Out.WriteLine($"Writing out modified contents to {saveDir.ModifiedSaveFilePath}");
+        Console.Out.WriteLine($"Writing out save contents to {saveDir.ModifiedSaveFilePath}");
+
         File.WriteAllText(saveDir.ModifiedSaveFilePath, modifiedSaveFileContents);
     }
 }
