@@ -51,7 +51,7 @@ public class Tests
             }
         }
 
-        Serialize(dict, saveDir);
+        SerializeOneDictToSaveFile(dict, saveDir);
 
         Console.Out.WriteLine($"Time until done: {stopwatch.Elapsed}");
         // Assert: the modified save file can be loaded
@@ -124,6 +124,56 @@ public class Tests
         Assert.That(parser.Current, Is.Null);
     }
 
+    [Test]
+    public void RoundTripsSaveFileUsingParser()
+    {
+        var saveDir = new SaveDir();
+        
+        string saveFileContents = File.ReadAllText(saveDir.SaveFilePath);
+
+        var input = new StringReader(saveFileContents);
+
+        var deserializer = new DeserializerBuilder().Build();
+
+        var parser = new Parser(input);
+
+        parser.Consume<StreamStart>();
+        parser.Consume<DocumentStart>();
+
+        Dictionary<object, object> metadata = deserializer.Deserialize<Dictionary<object, object>>(parser);
+        
+        metadata["name"] += "_MODIFIED2";
+
+        Console.Out.WriteLine("");
+        Console.Out.WriteLine("## Save metadata");
+        Console.Out.WriteLine("");
+
+        foreach (var key in metadata.Keys)
+        {
+            Console.Out.WriteLine(key);
+        }
+
+        parser.Consume<DocumentEnd>();
+        parser.Consume<DocumentStart>();
+        var contents = deserializer.Deserialize<Dictionary<object, object>>(parser);
+        parser.Consume<DocumentEnd>();
+
+        Console.Out.WriteLine("");
+        Console.Out.WriteLine("## Save data");
+        Console.Out.WriteLine("");
+
+        foreach (var key in contents.Keys)
+        {
+            Console.Out.WriteLine(key);
+        }
+
+        parser.Consume<StreamEnd>();
+        Assert.That(parser.Current, Is.Null);
+
+        SerializeTwoDictsToSaveFile(metadata, contents, saveDir);
+    }
+
+
     private static Dictionary<object, object> DeserializeSaveFileToDict(string saveFileContents)
     {
         var yamlDeserializer = new DeserializerBuilder().Build();
@@ -143,7 +193,7 @@ public class Tests
         return saveFile;
     }
 
-    private static void Serialize(Dictionary<object, object> dict, SaveDir saveDir)
+    private static void SerializeOneDictToSaveFile(Dictionary<object, object> dict, SaveDir saveDir)
     {
         var serializer = new SerializerBuilder().Build();
         string modifiedSaveFileContents = serializer
@@ -153,5 +203,21 @@ public class Tests
 
         Console.Out.WriteLine($"Writing out modified contents to {saveDir.ModifiedSaveFilePath}");
         File.WriteAllText(saveDir.ModifiedSaveFilePath, modifiedSaveFileContents);
+    }
+
+
+    private static void SerializeTwoDictsToSaveFile(
+        Dictionary<object, object> metadataDict,
+        Dictionary<object, object> contentsDict,
+        SaveDir saveDir)
+    {
+        var serializer = new SerializerBuilder().Build();
+        string metadata = serializer.Serialize(metadataDict);
+        string contents = serializer.Serialize(contentsDict);
+
+        string modifiedSaveFileContents = metadata + Environment.NewLine + "---" + Environment.NewLine + contents;
+
+        Console.Out.WriteLine($"Writing out modified contents to {saveDir.ModifiedSaveFilePath2}");
+        File.WriteAllText(saveDir.ModifiedSaveFilePath2, modifiedSaveFileContents);
     }
 }

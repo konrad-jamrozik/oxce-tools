@@ -6,6 +6,7 @@ class SaveDir
 {
     public string SaveFilePath { get; }
     public string ModifiedSaveFilePath { get; }
+    public string ModifiedSaveFilePath2 { get; }
 
     internal SaveDir()
     {
@@ -17,5 +18,6 @@ class SaveDir
         
         SaveFilePath = Path.GetFullPath($"{saveDir}/toprocess.sav");
         ModifiedSaveFilePath = Path.GetFullPath($"{saveDir}/toprocess_modified.sav");
+        ModifiedSaveFilePath2 = Path.GetFullPath($"{saveDir}/toprocess_modified2.sav");
     }
 }
