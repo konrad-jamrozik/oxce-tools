@@ -6,7 +6,7 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace OxceTools;
 
-public class SaveFile(SaveDir saveDir)
+public class SaveFile(Dirs dirs)
 {
     /// <summary>
     /// Implementation based on:
@@ -15,7 +15,7 @@ public class SaveFile(SaveDir saveDir)
     /// </summary>
     public (SaveMetadata metadata, SaveData data) Deserialize()
     {
-        string saveFileContents = File.ReadAllText(saveDir.SaveFilePath);
+        string saveFileContents = File.ReadAllText(dirs.SaveFilePath);
 
         var saveFileReader = new StringReader(saveFileContents);
 
@@ -29,7 +29,7 @@ public class SaveFile(SaveDir saveDir)
 
         SaveMetadata metadata = deserializer.Deserialize<SaveMetadata>(parser);
 
-        metadata.Name += "_MODIFIED";
+        metadata.Name = "toprocess_MODIFIED";
 
         parser.Consume<DocumentEnd>();
         parser.Consume<DocumentStart>();
@@ -60,8 +60,7 @@ public class SaveFile(SaveDir saveDir)
 
         string modifiedSaveFileContents = metadata + "---" + Environment.NewLine + data;
 
-        Console.Out.WriteLine($"Writing out save contents to {saveDir.ModifiedSaveFilePath}");
-
-        File.WriteAllText(saveDir.ModifiedSaveFilePath, modifiedSaveFileContents);
+        Console.Out.WriteLine($"Writing out save contents to {dirs.ModifiedSaveFilePath}");
+        File.WriteAllText(dirs.ModifiedSaveFilePath, modifiedSaveFileContents);
     }
 }
