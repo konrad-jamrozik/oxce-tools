@@ -12,27 +12,50 @@ public class Tests
     {
     }
 
+    /// <summary>
+    /// This test proves that a save file contents can be read, modified, and written out
+    /// to another save file, and still work in OXCE as expected.
+    ///
+    /// This test doesn't guarantee the written out modified save file actually works.
+    /// For that, load it up in OXCE and check if everything is order. After loading such
+    /// modified save file you could also save it back to the file system and diff its contents
+    /// to the baseline unmodified save file. Lack of modifications, except the indented ones
+    /// or expected ones (like few seconds passing in-game), means the round-tripping indeed works.
+    /// </summary>
     [Test]
     public void RoundTripsSaveFileWithModification()
     {
         var saveFile = new SaveFile(new Dirs());
 
         (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
-
         ModifySaveFile(data);
-
         saveFile.Serialize(metadata, data);
+        
+        Assert.Pass();
     }
 
+    /// <summary>
+    /// Use this test as a tool that creates a .csv file with mission data that then
+    /// you can edit manually. Notably, you may add "1" in the "Delete" column
+    /// to denote the mission should be deleted in the save file. Then you
+    /// can apply this deletion by running "UpdateSaveFileFromMissionDataFile".
+    /// If you want to verify the changes made to the missions to the modified save file,
+    /// run "SaveModifiedSaveMissionDataToCsv" and manually inspect the output file.
+    ///
+    /// To figure out the file paths being read/written to, observe stdout of the tests.
+    /// </summary>
     [Test]
-    public void SavesMissionDataToCsv()
+    public void SaveMissionDataToCsv()
     {
         var dirs = new Dirs();
-        SavesMissionDataToCsv(dirs.SaveFilePath, dirs.MissionDataCsvFilePath);
+        SaveMissionDataToCsv(dirs.SaveFilePath, dirs.MissionDataCsvFilePath);
     }
 
+    /// <summary>
+    /// See comment on "SaveMissionDataToCsv".
+    /// </summary>
     [Test]
-    public void UpdatesSaveFileFromMissionDataFile()
+    public void UpdateSaveFileFromMissionDataFile()
     {
         var dirs = new Dirs();
         var saveFile = new SaveFile(dirs);
@@ -43,15 +66,18 @@ public class Tests
         saveFile.Serialize(metadata, data);
     }
 
+    /// <summary>
+    /// See comment on "SaveMissionDataToCsv".
+    /// </summary>
     [Test]
-    public void SavesModifiedSaveMissionDataToCsv()
+    public void SaveModifiedSaveMissionDataToCsv()
     {
         var dirs = new Dirs();
-        SavesMissionDataToCsv(dirs.ModifiedSaveFilePath, dirs.ModifiedMissionDataCsvFilePath);
+        SaveMissionDataToCsv(dirs.ModifiedSaveFilePath, dirs.ModifiedMissionDataCsvFilePath);
     }
 
     [Test]
-    public void SavesMissionScriptsDataToCsv()
+    public void SaveMissionScriptsDataToCsv()
     {
         var dirs = new Dirs();
 
@@ -79,7 +105,7 @@ public class Tests
         }
     }
 
-    private void SavesMissionDataToCsv(string saveFilePath, string missionDataCsvFilePath)
+    private void SaveMissionDataToCsv(string saveFilePath, string missionDataCsvFilePath)
     {
         var dirs = new Dirs();
         var saveFile = new SaveFile(saveFilePath, dirs.ModifiedSaveFilePath);
