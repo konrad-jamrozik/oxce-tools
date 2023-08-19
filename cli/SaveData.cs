@@ -43,18 +43,20 @@ public class SaveData
     public required object AlienStrategy;
     public required object Options;
 
-    public void Update(AlienMissions alienMissions)
+    public void Update(AlienMissions alienMissions, bool shuffleInTime = true)
     {
         List<AlienMission> missionsToInclude =
             alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
 
-        missionsToInclude = ShuffleInTime(missionsToInclude);
+        if (shuffleInTime)
+            ShuffleInTime(missionsToInclude);
+
         UpdateMissionIds(missionsToInclude, alienMissions);
 
         AlienMissions = new AlienMissions(missionsToInclude);
     }
 
-    private static List<AlienMission> ShuffleInTime(List<AlienMission> missionsToInclude)
+    private static void ShuffleInTime(List<AlienMission> missionsToInclude)
     {
         int missionsCount = missionsToInclude.Count;
         int totalMinutes = 60 * 24 * 30; // 43200
@@ -68,11 +70,15 @@ public class SaveData
         var shuffledSpawnCountdowns = spawnCountdowns.Shuffle(random).Shuffle().ToArray();
         Debug.Assert(missionsToInclude.Count == shuffledSpawnCountdowns.Length);
         missionsToInclude.ForEach((mission, i) => mission.SpawnCountdown = shuffledSpawnCountdowns[i]);
-        return missionsToInclude.OrderBy(mission => mission.SpawnCountdown).ToList();
     }
 
     private void UpdateMissionIds(List<AlienMission> missionsToInclude, AlienMissions alienMissions)
     {
+        // We are about to reset all missions IDs to increase in sequence to remove the gaps 
+        // caused by deleted missions. For readability we are ordering the missions by 
+        // their spawn countdown.
+        missionsToInclude = missionsToInclude.OrderBy(mission => mission.SpawnCountdown).ToList();
+
         int alienMissionsCount = alienMissions.Count;
         int deletedMissionsCount = alienMissionsCount - missionsToInclude.Count;
         Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
