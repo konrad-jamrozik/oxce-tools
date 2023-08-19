@@ -70,26 +70,21 @@ public class Tests
         var alienMissions = LoadMissionDataFromCsv(dirs);
         int alienMissionsCount = alienMissions.Count;
 
-        var missionsToDelete = alienMissions.Where(mission => mission.Delete == "1").ToList();
+        var missionsToLoad = alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
 
-        var remainingMissions = alienMissions.Where(
-            mission => missionsToDelete.All(missionToDel => missionToDel.UniqueID != mission.UniqueID)).ToList();
-
-        int deletedMissionsCount = alienMissionsCount - remainingMissions.Count();
-
-        if (deletedMissionsCount != missionsToDelete.Count)
-            Console.Out.WriteLine(
-                $"Something went wrong with deletion. missionsToDelete: {missionsToDelete.Count}, deletedMissions: {deletedMissionsCount}");
+        int deletedMissionsCount = alienMissionsCount - missionsToLoad.Count;
 
         data.Ids["ALIEN_MISSIONS"] -= deletedMissionsCount;
 
-        int currentMinId = remainingMissions.Min(mission => mission.UniqueID);
+        int currentMinId = missionsToLoad.Min(mission => mission.UniqueID);
         int missionIdIterator = currentMinId;
 
-        remainingMissions.OrderBy(mission => mission.UniqueID).ToList()
+        // kja bucket missions by time, then redo the IDs in timeline order
+
+        missionsToLoad.OrderBy(mission => mission.UniqueID).ToList()
             .ForEach(mission => mission.UniqueID = missionIdIterator++);
 
-        data.AlienMissions = new AlienMissions(remainingMissions);
+        data.AlienMissions = new AlienMissions(missionsToLoad);
         
         saveFile.Serialize(metadata, data);
     }
