@@ -31,8 +31,10 @@ public class SaveData
     public required object Countries;
     public required object Regions;
     public required object Bases;
+    public required object MissionSites;
     public required AlienMissions AlienMissions;
     public required object GeoscapeEvents;
+    public required object Discovered;
     public required object GeneratedEvents;
     public required object UfopediaRuleStatus;
     public required object ManufactureRuleStatus;
@@ -41,6 +43,7 @@ public class SaveData
     public required object HiddenPurchaseItems;
     public required object CustomRuleCraftDeployments;
     public required object AlienStrategy;
+    public required object MissionStatistics;
     public required object Options;
 
     public void Update(AlienMissions alienMissions, bool shuffleInTime = true)
