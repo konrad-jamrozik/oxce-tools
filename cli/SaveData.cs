@@ -62,13 +62,18 @@ public class SaveData
     private static void ShuffleInTime(List<AlienMission> missionsToInclude)
     {
         int missionsCount = missionsToInclude.Count;
-        int totalMinutes = 60 * 24 * 30; // 43200
+        
+        // Most entries in missionScripts_XCOMFILES.rul have randomDelay: 43500
+        int totalMinutes = (60 * 24 * 30) + 300; // 43200 + 300 = 43500
         int intervalSize = totalMinutes / missionsCount;
+
+        // Most entries in missionScripts_XCOMFILES.rul have startDelay: 30
+        int startDelay = 30;
 
         var random = new Random();
         int[] spawnCountdowns = new int[missionsCount];
         for (int i = 0; i < missionsCount; i++)
-            spawnCountdowns[i] = i * intervalSize + random.Next(intervalSize);
+            spawnCountdowns[i] = startDelay + i * intervalSize + random.Next(intervalSize);
 
         var shuffledSpawnCountdowns = spawnCountdowns.Shuffle(random).Shuffle().ToArray();
         Debug.Assert(missionsToInclude.Count == shuffledSpawnCountdowns.Length);
