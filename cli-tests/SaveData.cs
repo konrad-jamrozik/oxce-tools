@@ -1,5 +1,6 @@
 namespace OxceToolsTests;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 public class SaveData
 {
     public required object Difficulty;
@@ -27,7 +28,9 @@ public class SaveData
     public required object Countries;
     public required object Regions;
     public required object Bases;
-    public required object AlienMissions;
+    // ReSharper disable once CollectionNeverUpdated.Global
+    // ReSharper disable once UnassignedField.Global
+    public required AlienMissions AlienMissions;
     public required object GeoscapeEvents;
     public required object GeneratedEvents;
     public required object UfopediaRuleStatus;

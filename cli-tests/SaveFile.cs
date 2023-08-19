@@ -46,31 +46,3 @@ public class SaveMetadataNodeDeserializer : INodeDeserializer
     }
 }
 
-public class AlienMission(string Type, string Race, int UniqueID)
-{
-
-}
-
-class AlienMissions : List<AlienMission>
-{
-
-}
-
-public class AlienMissionTypeConverter : IYamlTypeConverter
-{
-    public bool Accepts(Type type)
-    {
-        Console.Out.WriteLine("type: " + type.FullName);
-        return false;
-    }
-
-    public object? ReadYaml(IParser parser, Type type)
-    {
-        return null;
-    }
-
-    public void WriteYaml(IEmitter emitter, object? value, Type type)
-    {
-        return;
-    }
-}

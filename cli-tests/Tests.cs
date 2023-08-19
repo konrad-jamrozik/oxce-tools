@@ -156,12 +156,6 @@ public class Tests
 
         metadata.Name += "_MODIFIED2";
 
-        Console.Out.WriteLine("");
-        Console.Out.WriteLine("## Save metadata");
-        Console.Out.WriteLine("");
-
-        Console.Out.WriteLine(metadata.ToString());
-
         parser.Consume<DocumentEnd>();
         parser.Consume<DocumentStart>();
 
@@ -171,9 +165,11 @@ public class Tests
         SaveData data = dataDeserializer.Deserialize<SaveData>(parser);
         parser.Consume<DocumentEnd>();
 
-        Console.Out.WriteLine("");
-        Console.Out.WriteLine("## Save data");
-        Console.Out.WriteLine("");
+
+        foreach (var alienMission in data.AlienMissions)
+        {
+            alienMission.SpawnCountdown = 60;
+        }
 
         parser.Consume<StreamEnd>();
         Assert.That(parser.Current, Is.Null);
