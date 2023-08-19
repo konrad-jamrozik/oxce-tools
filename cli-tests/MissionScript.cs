@@ -18,7 +18,7 @@ public class MissionScript : ICsvFile
         var missionScript = Deserializer.Deserialize<MissionScript>(serialized);
         
         if (missionScript.LastMonth == 0)
-            missionScript.LastMonth = 999;
+            missionScript.LastMonth = 50;
         
         if (missionScript.ExecutionOdds == 0)
             missionScript.ExecutionOdds = 100;
