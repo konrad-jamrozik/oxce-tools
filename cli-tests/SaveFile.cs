@@ -33,14 +33,16 @@ public class SaveFileTypeConverter : IYamlTypeConverter
     }
 }
 
+
 // kja implement SaveFileNodeDeserializer
 // https://github.com/aaubry/YamlDotNet/wiki/Serialization.Deserializer#withnodedeserializer
 // to support nested deserializers.
-public class SaveFileNodeDeserializer : INodeDeserializer
+public class SaveMetadataNodeDeserializer : INodeDeserializer
 {
     public bool Deserialize(IParser reader, Type expectedType, Func<IParser, Type, object?> nestedObjectDeserializer, out object? value)
     {
-        throw new NotImplementedException();
+        value = null;
+        return false;
     }
 }
 

@@ -124,8 +124,17 @@ public class Tests
         Assert.That(parser.Current, Is.Null);
     }
 
+    /// <summary>
+    /// Proof-of-concept round-trip deserialization-modification-serialization of a save file,
+    /// where the save file contents is recognized to be two yaml documents and appropriately
+    /// deserialized into two objects: metadata and data.
+    ///
+    /// Reference:
+    /// https://stackoverflow.com/questions/50788277/why-3-dashes-hyphen-in-yaml-file
+    /// https://github.com/aaubry/YamlDotNet/wiki/Samples.DeserializingMultipleDocuments
+    /// </summary>
     [Test]
-    public void RoundTripsSaveFileUsingParser()
+    public void RoundTripsSaveFileUsingParserAndObjects()
     {
         var saveDir = new SaveDir();
         
@@ -140,37 +149,36 @@ public class Tests
         parser.Consume<StreamStart>();
         parser.Consume<DocumentStart>();
 
-        Dictionary<object, object> metadata = deserializer.Deserialize<Dictionary<object, object>>(parser);
-        
-        metadata["name"] += "_MODIFIED2";
+        var metadataDeserializer =
+            new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+
+        SaveMetadata metadata = metadataDeserializer.Deserialize<SaveMetadata>(parser);
+
+        metadata.Name += "_MODIFIED2";
 
         Console.Out.WriteLine("");
         Console.Out.WriteLine("## Save metadata");
         Console.Out.WriteLine("");
 
-        foreach (var key in metadata.Keys)
-        {
-            Console.Out.WriteLine(key);
-        }
+        Console.Out.WriteLine(metadata.ToString());
 
         parser.Consume<DocumentEnd>();
         parser.Consume<DocumentStart>();
-        var contents = deserializer.Deserialize<Dictionary<object, object>>(parser);
+
+        var dataDeserializer =
+            new DeserializerBuilder().WithNamingConvention(CamelCaseNamingConvention.Instance).Build();
+
+        SaveData data = dataDeserializer.Deserialize<SaveData>(parser);
         parser.Consume<DocumentEnd>();
 
         Console.Out.WriteLine("");
         Console.Out.WriteLine("## Save data");
         Console.Out.WriteLine("");
 
-        foreach (var key in contents.Keys)
-        {
-            Console.Out.WriteLine(key);
-        }
-
         parser.Consume<StreamEnd>();
         Assert.That(parser.Current, Is.Null);
 
-        SerializeTwoDictsToSaveFile(metadata, contents, saveDir);
+        SerializeToSaveFile(metadata, data, saveDir);
     }
 
 
@@ -206,16 +214,19 @@ public class Tests
     }
 
 
-    private static void SerializeTwoDictsToSaveFile(
-        Dictionary<object, object> metadataDict,
-        Dictionary<object, object> contentsDict,
+    private static void SerializeToSaveFile(
+        SaveMetadata metadataObj,
+        SaveData dataObj,
         SaveDir saveDir)
     {
-        var serializer = new SerializerBuilder().Build();
-        string metadata = serializer.Serialize(metadataDict);
-        string contents = serializer.Serialize(contentsDict);
+        var serializer = new SerializerBuilder()
+            .WithNamingConvention(LowerCaseNamingConvention.Instance)
+            .WithIndentedSequences()
+            .Build();
+        string metadata = serializer.Serialize(metadataObj);
+        string data = serializer.Serialize(dataObj);
 
-        string modifiedSaveFileContents = metadata + Environment.NewLine + "---" + Environment.NewLine + contents;
+        string modifiedSaveFileContents = metadata + "---" + Environment.NewLine + data;
 
         Console.Out.WriteLine($"Writing out modified contents to {saveDir.ModifiedSaveFilePath2}");
         File.WriteAllText(saveDir.ModifiedSaveFilePath2, modifiedSaveFileContents);
