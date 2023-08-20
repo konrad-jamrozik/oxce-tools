@@ -90,6 +90,7 @@ public class SaveData
     public required object GlobalCraftLoadout10;
     public required object GlobalCraftLoadoutName10;
     public required object MissionStatistics;
+    public required object AutoSales;
     public required object Options;
 
     public void Update(AlienMissions alienMissions, bool shuffleInTime = true)
