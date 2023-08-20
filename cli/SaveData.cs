@@ -109,17 +109,19 @@ public class SaveData
     {
         int missionsCount = missionsToInclude.Count;
         
-        // Most entries in missionScripts_XCOMFILES.rul have randomDelay: 43500
-        int totalMinutes = (60 * 24 * 30) + 300; // 43200 + 300 = 43500
-        int intervalSize = totalMinutes / missionsCount;
-
         // Most entries in missionScripts_XCOMFILES.rul have startDelay: 30
         int startDelay = 30;
+
+        // Most entries in missionScripts_XCOMFILES.rul have randomDelay: 43500
+        // but here we shorten it to avoid overflowing over shorter months.
+        // Note: February, as it has 28 days, will most likely overflow anyway.
+        int totalMinutes = (60 * 24 * 30); // = 43200
+        int intervalSize = totalMinutes / missionsCount;
 
         var random = new Random();
         int[] spawnCountdowns = new int[missionsCount];
         for (int i = 0; i < missionsCount; i++)
-            spawnCountdowns[i] = startDelay + i * intervalSize + random.Next(intervalSize);
+            spawnCountdowns[i] = i * intervalSize + random.Next(startDelay, intervalSize);
 
         var shuffledSpawnCountdowns = spawnCountdowns.Shuffle(random).Shuffle().ToArray();
         Debug.Assert(missionsToInclude.Count == shuffledSpawnCountdowns.Length);
