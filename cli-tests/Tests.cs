@@ -45,10 +45,10 @@ public class Tests
     /// To figure out the file paths being read/written to, observe stdout of the tests.
     /// </summary>
     [Test]
-    public void SaveMissionDataToCsv()
+    public void ReadMissionDataFromSave()
     {
         var dirs = new Dirs();
-        SaveMissionDataToCsv(dirs.SaveFilePath, dirs.MissionDataCsvFilePath);
+        ReadMissionDataFromSave(dirs.SaveFilePath, dirs.MissionDataCsvFilePath);
     }
 
     /// <summary>
@@ -66,14 +66,16 @@ public class Tests
         saveFile.Serialize(metadata, data);
     }
 
+
+
     /// <summary>
     /// See comment on "SaveMissionDataToCsv".
     /// </summary>
     [Test]
-    public void SaveModifiedSaveMissionDataToCsv()
+    public void ReadModifiedMissionDataFromModifiedSave()
     {
         var dirs = new Dirs();
-        SaveMissionDataToCsv(dirs.ModifiedSaveFilePath, dirs.ModifiedMissionDataCsvFilePath);
+        ReadMissionDataFromSave(dirs.ModifiedSaveFilePath, dirs.ModifiedMissionDataCsvFilePath);
     }
 
     [Test]
@@ -105,7 +107,7 @@ public class Tests
         }
     }
 
-    private void SaveMissionDataToCsv(string saveFilePath, string missionDataCsvFilePath)
+    private void ReadMissionDataFromSave(string saveFilePath, string missionDataCsvFilePath)
     {
         var dirs = new Dirs();
         var saveFile = new SaveFile(saveFilePath, dirs.ModifiedSaveFilePath);

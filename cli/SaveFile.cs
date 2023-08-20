@@ -61,6 +61,10 @@ public class SaveFile(string saveFilePath, string modifiedSaveFilePath)
         var serializer = new SerializerBuilder()
             .WithNamingConvention(LowerCaseNamingConvention.Instance)
             .WithIndentedSequences()
+            // Must omit nulls to avoid writing out nonexistent
+            // globalEquipmentLayouts
+            // and globalCraftLoadouts
+            .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
             .Build();
         string metadata = serializer.Serialize(metadataObj);
         string data = serializer.Serialize(dataObj);
