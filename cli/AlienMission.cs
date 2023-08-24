@@ -11,7 +11,7 @@ public class AlienMission : ICsvFile
     public required int LiveUfos;
     public required int UniqueID;
     public required int MissionSiteZone;
-    public string? Delete;
+    public string? Keep;
 
     public static AlienMission FromCsvRow(string[] row)
     {
@@ -26,7 +26,7 @@ public class AlienMission : ICsvFile
             LiveUfos = Convert.ToInt32(row[6]),
             UniqueID = Convert.ToInt32(row[7]),
             MissionSiteZone = Convert.ToInt32(row[8]),
-            Delete = !string.IsNullOrWhiteSpace(row[9]) ? row[9] : null
+            Keep = !string.IsNullOrWhiteSpace(row[9]) ? row[9] : null
         };
     }
 }

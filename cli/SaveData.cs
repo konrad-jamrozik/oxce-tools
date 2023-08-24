@@ -116,7 +116,7 @@ public class SaveData
     public void Update(AlienMissions alienMissions, bool shuffleInTime = false)
     {
         List<AlienMission> missionsToInclude =
-            alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
+            alienMissions.Where(mission => !string.IsNullOrWhiteSpace(mission.Keep) && mission.Keep == "1").ToList();
 
         if (shuffleInTime)
             ShuffleInTime(missionsToInclude);

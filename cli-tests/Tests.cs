@@ -36,8 +36,8 @@ public class Tests
 
     /// <summary>
     /// Use this test as a tool that creates a .csv file with mission data that then
-    /// you can edit manually. Notably, you may add "1" in the "Delete" column
-    /// to denote the mission should be deleted in the save file. Then you
+    /// you can edit manually. Notably, you may add "1" in the "Keep" column
+    /// to denote the mission should be kept in the save file. Then you
     /// can apply this deletion by running "UpdateSaveFileFromMissionDataFileAndShuffle".
     /// If you want to verify the changes made to the missions to the modified save file,
     /// run "SaveModifiedSaveMissionDataToCsv" and manually inspect the output file.
@@ -110,7 +110,7 @@ public class Tests
         List<object> objectMissionScripts = (List<object>)rootDict["missionScripts"];
         List<Dictionary<object, object>> dictMissionScripts = objectMissionScripts.Cast<Dictionary<object, object>>().ToList();
         List<MissionScript> missionScripts = dictMissionScripts
-            .Where(dict => !dict.ContainsKey("delete"))
+            .Where(dict => dict.ContainsKey("keep") && (string)dict["keep"] == "1")
             .Select(MissionScript.From)
             .ToList();
 
