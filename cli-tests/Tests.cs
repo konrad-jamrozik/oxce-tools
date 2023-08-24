@@ -38,9 +38,14 @@ public class Tests
     /// Use this test as a tool that creates a .csv file with mission data that then
     /// you can edit manually. Notably, you may add "1" in the "Delete" column
     /// to denote the mission should be deleted in the save file. Then you
-    /// can apply this deletion by running "UpdateSaveFileFromMissionDataFile".
+    /// can apply this deletion by running "UpdateSaveFileFromMissionDataFileAndShuffle".
     /// If you want to verify the changes made to the missions to the modified save file,
     /// run "SaveModifiedSaveMissionDataToCsv" and manually inspect the output file.
+    ///
+    /// The test "UpdateSaveFileFromMissionDataFileAndShuffle" is going to shuffle the mission
+    /// times, and reorder the missions by spawn time. You can always update the times by
+    /// opening the .csv output by "SaveModifiedSaveMissionDataToCsv", making your changes,
+    /// and then running "UpdateSaveFileFromModifiedMissionDataFile".
     ///
     /// To figure out the file paths being read/written to, observe stdout of the tests.
     /// </summary>
@@ -55,17 +60,31 @@ public class Tests
     /// See comment on "SaveMissionDataToCsv".
     /// </summary>
     [Test]
-    public void UpdateSaveFileFromMissionDataFile()
+    public void UpdateSaveFileFromMissionDataFileAndShuffle()
     {
         var dirs = new Dirs();
         var saveFile = new SaveFile(dirs);
 
         (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
         AlienMissions alienMissions = new MissionDataFile(dirs).Read();
-        data.Update(alienMissions);
+        data.Update(alienMissions, shuffleInTime: true);
         saveFile.Serialize(metadata, data);
     }
 
+    /// <summary>
+    /// See comment on "SaveMissionDataToCsv".
+    /// </summary>
+    [Test]
+    public void UpdateSaveFileFromModifiedMissionDataFile()
+    {
+        var dirs = new Dirs();
+        var saveFile = new SaveFile(dirs);
+
+        (SaveMetadata metadata, SaveData data) = saveFile.Deserialize();
+        AlienMissions alienMissions = new MissionDataFile(dirs.ModifiedMissionDataCsvFilePath).Read();
+        data.Update(alienMissions, shuffleInTime: false);
+        saveFile.Serialize(metadata, data);
+    }
 
 
     /// <summary>

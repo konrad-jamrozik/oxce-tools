@@ -67,6 +67,26 @@ public class SaveData
     public required object GlobalEquipmentLayoutName9;
     public required object GlobalEquipmentLayout10;
     public required object GlobalEquipmentLayoutName10;
+    public required object GlobalEquipmentLayout11;
+    public required object GlobalEquipmentLayoutName11;
+    public required object GlobalEquipmentLayout12;
+    public required object GlobalEquipmentLayoutName12;
+    public required object GlobalEquipmentLayout13;
+    public required object GlobalEquipmentLayoutName13;
+    public required object GlobalEquipmentLayout14;
+    public required object GlobalEquipmentLayoutName14;
+    public required object GlobalEquipmentLayout15;
+    public required object GlobalEquipmentLayoutName15;
+    public required object GlobalEquipmentLayout16;
+    public required object GlobalEquipmentLayoutName16;
+    public required object GlobalEquipmentLayout17;
+    public required object GlobalEquipmentLayoutName17;
+    public required object GlobalEquipmentLayout18;
+    public required object GlobalEquipmentLayoutName18;
+    public required object GlobalEquipmentLayout19;
+    public required object GlobalEquipmentLayoutName19;
+    public required object GlobalEquipmentLayout20;
+    public required object GlobalEquipmentLayoutName20;
     public required object GlobalCraftLoadout0;
     public required object GlobalCraftLoadoutName0;
     public required object GlobalCraftLoadout1;
@@ -93,7 +113,7 @@ public class SaveData
     public required object AutoSales;
     public required object Options;
 
-    public void Update(AlienMissions alienMissions, bool shuffleInTime = true)
+    public void Update(AlienMissions alienMissions, bool shuffleInTime = false)
     {
         List<AlienMission> missionsToInclude =
             alienMissions.Where(mission => string.IsNullOrWhiteSpace(mission.Delete)).ToList();
