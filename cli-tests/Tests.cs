@@ -118,6 +118,13 @@ public class Tests
         Assert.Pass();
     }
 
+    [Test]
+    public void ReadSoldierDataFromSave()
+    {
+        var dirs = new Dirs();
+        ReadSoldierDataFromSave(dirs.SaveFilePath, dirs.SoldierDataCsvFilePath);
+    }
+
     private static void ModifySaveFile(SaveData data)
     {
         foreach (var alienMission in data.AlienMissions)
@@ -146,11 +153,23 @@ public class Tests
             return;
 
 
-        stringBuilder.AppendLine((missionScripts[0] as ICsvFile).CsvHeader());
+        stringBuilder.AppendLine((missionScripts[0] as ICsvRecord).CsvHeader());
         foreach (MissionScript missionScript in missionScripts)
-            stringBuilder.AppendLine((missionScript as ICsvFile).CsvRow());
+            stringBuilder.AppendLine((missionScript as ICsvRecord).CsvRow());
 
         Console.Out.WriteLine($"Writing out csv data to {dirs.MissionScriptsDataCsvFilePath}");
         File.WriteAllText(dirs.MissionScriptsDataCsvFilePath, stringBuilder.ToString());
+    }
+
+    private void ReadSoldierDataFromSave(string saveFilePath, string soldierDataCsvFilePath)
+    {
+        var dirs = new Dirs();
+        var saveFile = new SaveFile(saveFilePath, dirs.ModifiedSaveFilePath);
+        (SaveMetadata _, SaveData data) = saveFile.Deserialize();
+        
+        var soldierDataFile = new SoldierDataFile(soldierDataCsvFilePath);
+
+        // Act
+        soldierDataFile.WriteFrom(data);
     }
 }

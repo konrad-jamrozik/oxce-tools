@@ -5,7 +5,7 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace OxceToolsTests;
 
 // ReSharper disable once ClassNeverInstantiated.Global
-public class MissionScript : ICsvFile
+public class MissionScript : ICsvRecord
 {
     private static readonly Serializer Serializer = new Serializer();
 

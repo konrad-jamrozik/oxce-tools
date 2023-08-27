@@ -1,6 +1,6 @@
 namespace OxceTools;
 
-public class AlienMission : ICsvFile
+public class AlienMission : ICsvRecord
 {
     public required string Type;
     public required string Region;

@@ -17,9 +17,9 @@ public class MissionDataFile(string missionDataCsvFilePath)
         if (!alienMissions.Any())
             return;
 
-        stringBuilder.AppendLine((alienMissions[0] as ICsvFile).CsvHeader());
+        stringBuilder.AppendLine((alienMissions[0] as ICsvRecord).CsvHeader());
         foreach (AlienMission alienMission in alienMissions)
-            stringBuilder.AppendLine((alienMission as ICsvFile).CsvRow());
+            stringBuilder.AppendLine((alienMission as ICsvRecord).CsvRow());
 
         Console.Out.WriteLine($"Writing out CSV mission data to {missionDataCsvFilePath}");
         File.WriteAllText(missionDataCsvFilePath, stringBuilder.ToString());

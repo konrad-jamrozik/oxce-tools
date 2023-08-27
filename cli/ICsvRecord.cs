@@ -1,6 +1,6 @@
 namespace OxceTools;
 
-public interface ICsvFile
+public interface ICsvRecord
 {
     public string CsvHeader()
     {
@@ -15,6 +15,9 @@ public interface ICsvFile
     {
         var fieldValues = GetType()
             .GetFields()
+            // Ignore fields of type object because if a field is of type object it means I didn't
+            // yet implemented parsing it; instead, I am just dumping to whatever is in the .yml file
+            // to this field.
             .Where(field => field.FieldType != typeof(object))
             .Select(field =>
             {
