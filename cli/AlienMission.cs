@@ -45,8 +45,11 @@ public class AlienMission : ICsvRecord
                $"{nameof(Type)}: {Type} | " +
                $"{nameof(Id)}: {Id}";
 
-        public static AlienBaseField FromString(string str)
+        public static AlienBaseField? FromString(string str)
         {
+            if (string.IsNullOrEmpty(str))
+                return null;
+
             string[] props = str.Split("|");
 
             return new AlienBaseField
@@ -54,11 +57,10 @@ public class AlienMission : ICsvRecord
                 Lon = Convert.ToDouble(GetValue(props[0])),
                 Lat = Convert.ToDouble(GetValue(props[1])),
                 Type = GetValue(props[2]),
-                Id = Convert.ToInt32(props[3])
+                Id = Convert.ToInt32(GetValue(props[3]))
             };
 
             string GetValue(string prop) => prop.Split(":")[1].Trim();
         }
     }
 }
-
