@@ -10,9 +10,10 @@ public class AlienMission : ICsvRecord
     public required int SpawnCountdown;
     public required int LiveUfos;
     public required int UniqueID;
+    public required AlienBaseField? AlienBase;
     public required int MissionSiteZone;
     public string? Keep;
-
+    
     public static AlienMission FromCsvRow(string[] row)
     {
         return new AlienMission
@@ -25,8 +26,18 @@ public class AlienMission : ICsvRecord
             SpawnCountdown = Convert.ToInt32(row[5]),
             LiveUfos = Convert.ToInt32(row[6]),
             UniqueID = Convert.ToInt32(row[7]),
+            AlienBase = null,
             MissionSiteZone = Convert.ToInt32(row[8]),
             Keep = !string.IsNullOrWhiteSpace(row[9]) ? row[9] : null
         };
     }
+
+    public class AlienBaseField
+    {
+        public required float Lon;
+        public required float Lat;
+        public required string Type;
+        public required int Id;
+    }
 }
+

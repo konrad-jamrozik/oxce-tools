@@ -31,6 +31,7 @@ public class SaveData
     public required object Countries;
     public required object Regions;
     public required Bases Bases;
+    public required object AlienBases;
     public required object MissionSites;
     public required AlienMissions AlienMissions;
     public required object GeoscapeEvents;
