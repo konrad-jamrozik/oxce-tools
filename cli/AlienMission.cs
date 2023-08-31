@@ -26,18 +26,39 @@ public class AlienMission : ICsvRecord
             SpawnCountdown = Convert.ToInt32(row[5]),
             LiveUfos = Convert.ToInt32(row[6]),
             UniqueID = Convert.ToInt32(row[7]),
-            AlienBase = null,
-            MissionSiteZone = Convert.ToInt32(row[8]),
-            Keep = !string.IsNullOrWhiteSpace(row[9]) ? row[9] : null
+            AlienBase = AlienBaseField.FromString(row[8]),
+            MissionSiteZone = Convert.ToInt32(row[9]),
+            Keep = !string.IsNullOrWhiteSpace(row[10]) ? row[10] : null
         };
     }
 
     public class AlienBaseField
     {
-        public required float Lon;
-        public required float Lat;
+        public required double Lon;
+        public required double Lat;
         public required string Type;
         public required int Id;
+
+        public override string ToString()
+            => $"{nameof(Lon)}: {Lon} | " +
+               $"{nameof(Lat)}: {Lat} | " +
+               $"{nameof(Type)}: {Type} | " +
+               $"{nameof(Id)}: {Id}";
+
+        public static AlienBaseField FromString(string str)
+        {
+            string[] props = str.Split("|");
+
+            return new AlienBaseField
+            {
+                Lon = Convert.ToDouble(GetValue(props[0])),
+                Lat = Convert.ToDouble(GetValue(props[1])),
+                Type = GetValue(props[2]),
+                Id = Convert.ToInt32(props[3])
+            };
+
+            string GetValue(string prop) => prop.Split(":")[1].Trim();
+        }
     }
 }
 
