@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OXCE Stats Explorer</title>
+<style>
+  :root { color-scheme: dark; --bg:#111719; --panel:#192225; --line:#384548; --fg:#edf3ef; --muted:#b1c0bc; --accent:#a5edc9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui,sans-serif; }
+  main { max-width:1600px; margin:auto; padding:clamp(16px,3vw,40px); }
+  h1 { font-size:clamp(28px,4vw,44px); letter-spacing:-.045em; margin:0 0 14px; }
+  h2 { margin:0 0 14px; font-size:1.35rem; }
+  p { margin:.5rem 0; }
+  nav,.toolbar,.actions { display:flex; flex-wrap:wrap; gap:8px; align-items:end; }
+  nav { border-bottom:1px solid var(--line); margin-bottom:15px; }
+  button,input,select { font:inherit; color:inherit; }
+  button,select,input { border:1px solid var(--line); padding:7px 10px; background:var(--panel); border-radius:5px; }
+  button { cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button[aria-selected="true"] { color:var(--accent); border-color:var(--accent); }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  label { display:grid; gap:3px; color:var(--muted); font-size:.86rem; }
+  #search { min-width:min(250px,72vw); }
+  #status { margin:12px 0 7px; color:var(--muted); }
+  #hint { max-width:95ch; color:var(--muted); margin:0 0 12px; }
+  .table-scroll { overflow:auto; max-height:72vh; border:1px solid var(--line); border-radius:6px; }
+  table { border-collapse:separate; border-spacing:0; min-width:100%; font-variant-numeric:tabular-nums; }
+  th,td { border-bottom:1px solid var(--line); padding:8px 10px; white-space:nowrap; text-align:left; }
+  th { position:sticky; top:0; background:#253236; z-index:1; padding:0; }
+  th button { background:none; border:0; width:100%; text-align:left; font-weight:650; }
+  th button:hover,.row-link:hover { color:var(--accent); }
+  th[aria-sort] button { color:var(--accent); }
+  tr:nth-child(even) td { background:#162023; }
+  tbody tr:hover td { background:#253236; }
+  .number { text-align:right; }
+  .row-link { border:0; padding:0; background:none; text-align:left; color:var(--accent); }
+  footer { color:var(--muted); font-size:.82rem; margin-top:18px; overflow-wrap:anywhere; }
+  .actions { justify-content:space-between; margin-top:10px; }
+  .actions span { display:flex; gap:8px; }
+  button:disabled { color:var(--muted); opacity:.55; cursor:default; }
+  dialog { width:min(640px,94vw); max-height:90vh; overflow:auto; background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:8px; padding:22px; }
+  dialog::backdrop { background:#000a; }
+  dialog form { float:right; padding-left:8px; }
+  dialog dl { display:grid; grid-template-columns:minmax(110px,1fr) 2fr; gap:6px 12px; }
+  dialog dt { color:var(--muted); }
+  dialog dd { margin:0; overflow-wrap:anywhere; }
+  dialog li { margin-bottom:6px; }
+  @media (max-width:680px) { .table-scroll { max-height:65vh; } }
+</style>
+<main>
+  <h1>OXCE Stats Explorer</h1>
+  <nav role="tablist" aria-label="Report tables" id="tabs"></nav>
+  <section id="report" role="tabpanel">
+    <p id="hint"></p>
+    <div class="toolbar" id="filters"></div>
+    <p id="status" aria-live="polite"></p>
+    <div class="table-scroll" tabindex="0" aria-label="Results">
+      <table aria-label="Stats results"><thead id="head"></thead><tbody id="body"></tbody></table>
+    </div>
+    <div class="actions">
+      <button id="export">Export filtered CSV</button>
+      <span><button id="prev">Previous</button><button id="next">Next</button></span>
+    </div>
+  </section>
+  <footer id="sources"></footer>
+</main>
+<dialog id="details" aria-labelledby="detail-title">
+  <form method="dialog"><button>Close</button></form>
+  <h2 id="detail-title"></h2>
+  <div id="detail-body"></div>
+</dialog>
+<script type="application/json" id="report-data"><!-- REPORT_DATA --></script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("report-data").textContent);
+const el = id => document.getElementById(id);
+const num = Intl.NumberFormat("en-US", {maximumFractionDigits: 4});
+const collator = Intl.Collator("en", {numeric: true, sensitivity: "base"});
+const shown = value => value === null || value === undefined || value === "" ? "—" :
+  typeof value === "number" ? num.format(value) : Array.isArray(value) ?
+    (value.join(", ") || "—") : typeof value === "object" ? JSON.stringify(value) : String(value);
+const stat = (key, title, suffix = "") => [key, title, row =>
+  row[key] == null ? "—" : num.format(row[key]) + suffix];
+const col = (key, title) => [key, title, row => shown(row[key])];
+const prices = [stat("buy", "Buy price"), stat("sell", "Sell price")];
+const sides = [stat("front", "Front"), stat("side", "Side"), stat("rear", "Rear"), stat("under", "Under")];
+const nameCol = col("name", "Name");
+const modes = ["Snap", "Aimed", "Auto", "Melee", "Use"].flatMap(mode => [
+  col(mode + "Name", mode + " action"),
+  [mode + "Tu", mode + " TU", row => row[mode + "Tu"] == null ? "—" :
+    num.format(row[mode + "Tu"]) + (row[mode + "Flat"] ? " TU" : "%")],
+  stat(mode + "Accuracy", mode + " accuracy", "%"), stat(mode + "Shots", mode + " shots")
+]);
+const ranges = [stat("range", "Max range"), stat("minRange", "Min range"),
+  stat("snapRange", "Snap range"), stat("aimRange", "Aim range"), stat("autoRange", "Auto range"),
+  stat("dropoff", "Accuracy dropoff"), stat("powerThreshold", "Power dropoff starts"),
+  stat("powerDropoff", "Power dropoff per tile")];
+const damageCols = [stat("damage", "Base damage"), col("damageType", "Damage type"),
+  col("resistType", "Resistance used")];
+const resistanceCols = data.damageTypes.map((name, index) => [
+  "resist" + index, name + " taken", row => num.format(row["resist" + index] * 100) + "%"
+]);
+const tabs = {
+  weapons: {
+    title: "Weapons", sort: ["damage", -1],
+    hint: "Each row represents a compatible ammo option or an attack with its own damage profile. Base damage is ruleset power per projectile, before bonuses. Accuracy is the weapon’s modifier, and TU shows the cost unit.",
+    filters: [["damageType", "Damage type"], ["classes", "Weapon type"], ["fixed", "Weapon source"]],
+    views: {
+      Overview: [nameCol, col("ammo", "Ammo"), ...damageCols, col("classes", "Weapon type"), stat("weight", "Weapon weight"), ...prices],
+      "Fire modes": [nameCol, col("ammo", "Ammo"), ...damageCols.slice(0, 2), ...modes],
+      "Range & falloff": [nameCol, col("ammo", "Ammo"), stat("damage", "Base damage"), ...ranges],
+      Ammunition: [nameCol, col("ammo", "Ammo"), ...damageCols, stat("slot", "Ammo slot"), stat("clip", "Clip size"),
+        stat("pellets", "Pellets / shot"), stat("ammoWeight", "Ammo weight"), stat("ammoBuy", "Ammo buy"), stat("ammoSell", "Ammo sell")]
+    },
+    details: [col("source", "Damage source"), col("bonus", "Power bonus rule")]
+  },
+  armors: {
+    title: "Armor", sort: ["front", -1],
+    hint: "Protection is listed by hit direction. Resistance columns show incoming damage taken: 75% means 25% resistance, and 125% means vulnerability. Armor prices come from its linked inventory item.",
+    filters: [["kind", "Armor group"], ["wearers", "Wearer"]],
+    views: {
+      Protection: [nameCol, col("kind", "Armor group"), ...sides, stat("weight", "Weight"), ...prices,
+        stat("shield", "Shield capacity"), stat("shieldRegen", "Shield / turn")],
+      Resistances: [nameCol, col("kind", "Armor group"), ...resistanceCols],
+      Equipment: [nameCol, col("storeItem", "Store item"), col("wearers", "Wearers"), stat("size", "Size"),
+        stat("psiDefence", "Psi defense"), stat("meleeDodge", "Melee dodge"), col("stats", "Stat modifiers")]
+    }
+  },
+  units: {
+    title: "Enemies & units", sort: ["health", -1],
+    hint: "Health is from base unit stats. Melee base damage is raw power; melee power (est.) adds supported bonuses from the unit’s base stats. Monster tags use specimen categories and zombie race; roster membership describes potential enemies.",
+    filters: [["role", "Roster"], ["kinds", "Unit type"], ["race", "Race"], ["groups", "Faction / roster"], ["rank", "Rank"]],
+    views: {
+      Overview: [nameCol, col("race", "Race"), col("rank", "Rank"), col("kinds", "Unit type"),
+        stat("health", "Health"), stat("meleeDamage", "Melee base damage"), stat("meleePower", "Melee power (est.)"),
+        col("armor", "Armor"), ...sides],
+      "Unit stats": [nameCol, col("race", "Race"), stat("health", "Health"), stat("tu", "TU"),
+        stat("stamina", "Stamina"), stat("bravery", "Bravery"), stat("reactions", "Reactions"),
+        stat("firing", "Firing"), stat("throwing", "Throwing"), stat("melee", "Melee skill"),
+        stat("strength", "Strength"), stat("psiStrength", "Psi strength"), stat("psiSkill", "Psi skill")],
+      Loadout: [nameCol, col("equipment", "Declared equipment"), stat("meleeDamage", "Melee base damage"),
+        stat("meleePower", "Melee power (est.)"),
+        stat("armorHealth", "Armor health bonus"), col("groups", "Factions / rosters")]
+    },
+    details: [col("armorId", "Armor ID"), stat("aggression", "Aggression"), stat("intelligence", "Intelligence")]
+  },
+  items: {
+    title: "All items", sort: ["name", 1],
+    hint: "The full inventory catalog, including ammo, weapons, consumables, components, and non-combat gear. This table shows each item’s own ruleset fields.",
+    filters: [["kind", "Item type"], ["categories", "Category"], ["damageType", "Damage type"]],
+    views: { Items: [nameCol, col("kind", "Item type"), col("categories", "Categories"),
+      ...damageCols, stat("weight", "Weight"), ...prices, stat("size", "Storage size")] }
+  },
+  craft: {
+    title: "Craft weapons", sort: ["damage", -1],
+    hint: "Interception weapons have separate damage, range, accuracy, and reload rules.",
+    filters: [],
+    views: { Interception: [nameCol, col("ammo", "Ammo"), stat("damage", "Damage"), stat("range", "Range"),
+      stat("accuracy", "Accuracy", "%"), stat("mount", "Mount type"), stat("capacity", "Ammo capacity"),
+      stat("cautious", "Cautious reload"), stat("standard", "Standard reload"),
+      stat("aggressive", "Aggressive reload"), ...prices] }
+  }
+};
+const pageSize = 75;
+const states = Object.fromEntries(Object.entries(tabs).map(([key, tab]) => [key, {
+  view: Object.keys(tab.views)[0], sort: [...tab.sort], page: 0, query: "", filters: {}
+}]));
+states.units.filters.role = "Hostile roster";
+let active = "weapons";
+let matching = [];
+
+function node(tag, value) {
+  const element = document.createElement(tag);
+  if (value !== undefined) element.textContent = value;
+  return element;
+}
+
+function button(label, action) {
+  const element = node("button", label);
+  element.type = "button";
+  element.addEventListener("click", action);
+  return element;
+}
+
+function addSelect(parent, title, entries, current, onChange) {
+  const label = node("label", title);
+  const select = node("select");
+  for (const [value, text] of entries) {
+    const option = node("option", text);
+    option.value = value;
+    select.append(option);
+  }
+  select.value = current;
+  select.addEventListener("change", () => onChange(select.value));
+  label.append(select);
+  parent.append(label);
+}
+
+function values(value) {
+  return Array.isArray(value) ? value : value == null || value === "" ? [] : [String(value)];
+}
+
+function compare(a, b, key, direction) {
+  const left = a[key];
+  const right = b[key];
+  if (left == null || right == null) {
+    return left == null && right == null ? collator.compare(a.name, b.name) : left == null ? 1 : -1;
+  }
+  const order = typeof left === "number" && typeof right === "number" ?
+    left - right : collator.compare(String(left), String(right));
+  return order * direction || collator.compare(a.name, b.name);
+}
+
+function matches(row, query, filters) {
+  if (!Object.entries(filters).every(([key, value]) => !value || values(row[key]).includes(value))) return false;
+  const haystack = [row.name, row.id, row.ammo, row.ammoId, row.armor, row.damageType,
+    row.race, row.rank, row.classes, row.categories, row.kinds, row.groups, row.equipment]
+    .flat().filter(Boolean).join(" ").toLowerCase();
+  return query.trim().toLowerCase().split(/\s+/).every(word => haystack.includes(word));
+}
+
+function displayDetail(row) {
+  el("detail-title").textContent = row.name;
+  const body = el("detail-body");
+  const columns = [["id", "Ruleset ID", item => item.id],
+    ...Object.values(tabs[active].views).flat(), ...(tabs[active].details || [])];
+  if (row.ammoId) columns.push(col("ammoId", "Ammo ruleset ID"));
+  const list = node("dl");
+  const seen = new Set(["name"]);
+  for (const [key, label, display] of columns) {
+    if (seen.has(key) || row[key] == null || display(row) === "—") continue;
+    list.append(node("dt", label), node("dd", display(row)));
+    seen.add(key);
+  }
+  body.replaceChildren(list);
+  if (row.attacks?.length) {
+    const attacks = node("ul");
+    for (const attack of row.attacks) {
+      const bonus = attack.bonus ? " · bonus " + shown(attack.bonus) : "";
+      const estimate = attack.estimatedPower == null ? "" : " · estimated power " + shown(attack.estimatedPower);
+      attacks.append(node("li", attack.name + " · " + shown(attack.damage) + " base power · " +
+        shown(attack.damageType) + estimate + bonus));
+    }
+    body.append(node("h3", "Declared melee attacks"), attacks);
+  }
+  el("details").showModal();
+}
+
+function showTab(key) {
+  active = key;
+  const tab = tabs[key];
+  const state = states[key];
+  el("hint").textContent = tab.hint;
+  for (const control of el("tabs").children) {
+    control.setAttribute("aria-selected", String(control.dataset.tab === key));
+    control.tabIndex = control.dataset.tab === key ? 0 : -1;
+  }
+  el("report").setAttribute("aria-labelledby", "tab-" + key);
+  const filters = el("filters");
+  filters.replaceChildren();
+  const label = node("label", "Search");
+  const search = node("input");
+  search.id = "search";
+  search.type = "search";
+  search.placeholder = "Name, ammo, or ruleset ID";
+  search.value = state.query;
+  search.addEventListener("input", () => { state.query = search.value; state.page = 0; render(); });
+  label.append(search);
+  filters.append(label);
+  for (const [field, title] of tab.filters) {
+    const options = [...new Set(data[key].flatMap(row => values(row[field])))].sort(collator.compare);
+    addSelect(filters, title, [["", "All"], ...options.map(item => [item, item])], state.filters[field] || "",
+      selected => { state.filters[field] = selected; state.page = 0; render(); });
+  }
+  const viewEntries = Object.keys(tab.views).map(view => [view, view]);
+  if (viewEntries.length > 1) {
+    addSelect(filters, "Columns", viewEntries, state.view, view => {
+      state.view = view;
+      if (!tab.views[view].some(([field]) => field === state.sort[0])) {
+        const columns = tab.views[view];
+        const firstStat = columns.find(([field]) => data[key].some(row => typeof row[field] === "number"));
+        state.sort = firstStat ? [firstStat[0], view === "Resistances" ? 1 : -1] : ["name", 1];
+      }
+      state.page = 0;
+      render();
+    });
+  }
+  if (key === "armors") {
+    const resistance = [["", "Choose a damage type"], ...data.damageTypes.map((name, index) => ["resist" + index, name])];
+    addSelect(filters, "Rank by resistance", resistance, state.sort[0], column => {
+      if (!column) return;
+      state.view = "Resistances";
+      state.sort = [column, 1];
+      state.page = 0;
+      showTab(key);
+      const index = tab.views[state.view].findIndex(([field]) => field === column);
+      el("head").querySelectorAll("th")[index].scrollIntoView({block:"nearest", inline:"nearest"});
+    });
+  }
+  filters.append(button("Clear filters", () => {
+    state.query = "";
+    state.filters = {};
+    state.page = 0;
+    showTab(key);
+  }));
+  render();
+}
+
+function render() {
+  const tab = tabs[active];
+  const state = states[active];
+  const columns = tab.views[state.view];
+  const [key, direction] = state.sort;
+  matching = data[active].filter(row => matches(row, state.query, state.filters))
+    .sort((left, right) => compare(left, right, key, direction));
+  const start = state.page * pageSize;
+  const end = Math.min(start + pageSize, matching.length);
+  const header = node("tr");
+  for (const [field, title] of columns) {
+    const th = node("th");
+    th.scope = "col";
+    const sorted = field === key;
+    if (sorted) th.setAttribute("aria-sort", direction > 0 ? "ascending" : "descending");
+    th.append(button(title + (sorted ? (direction > 0 ? " ↑" : " ↓") : ""), () => {
+      const numeric = matching.some(row => typeof row[field] === "number");
+      state.sort = [field, sorted ? -direction : numeric && !field.startsWith("resist") ? -1 : 1];
+      state.page = 0;
+      render();
+      el("head").querySelectorAll("button")[columns.findIndex(([id]) => id === field)].focus();
+    }));
+    header.append(th);
+  }
+  el("head").replaceChildren(header);
+  const rows = document.createDocumentFragment();
+  for (const row of matching.slice(start, end)) {
+    const tr = node("tr");
+    for (const [field, , display] of columns) {
+      const td = node("td");
+      if (field === "name") {
+        const link = button(row.name, () => displayDetail(row));
+        link.className = "row-link";
+        link.title = row.id;
+        td.append(link);
+      } else {
+        td.textContent = display(row);
+        if (typeof row[field] === "number") td.className = "number";
+      }
+      tr.append(td);
+    }
+    rows.append(tr);
+  }
+  el("body").replaceChildren(rows);
+  el("status").textContent = matching.length ? (start + 1) + "–" + end + " of " +
+    num.format(matching.length) + " matching rows" : "No matching rows";
+  el("prev").disabled = !start;
+  el("next").disabled = end >= matching.length;
+  el("export").disabled = !matching.length;
+}
+
+for (const [key, tab] of Object.entries(tabs)) {
+  const control = button(tab.title, () => showTab(key));
+  control.id = "tab-" + key;
+  control.dataset.tab = key;
+  control.setAttribute("role", "tab");
+  control.setAttribute("aria-controls", "report");
+  el("tabs").append(control);
+}
+el("tabs").addEventListener("keydown", event => {
+  const keys = Object.keys(tabs);
+  const index = keys.indexOf(active);
+  const positions = {ArrowRight: (index + 1) % keys.length, ArrowLeft: (index - 1 + keys.length) % keys.length,
+    Home: 0, End: keys.length - 1};
+  if (!Object.hasOwn(positions, event.key)) return;
+  event.preventDefault();
+  const key = keys[positions[event.key]];
+  showTab(key);
+  el("tab-" + key).focus();
+});
+el("prev").onclick = () => { states[active].page--; render(); };
+el("next").onclick = () => { states[active].page++; render(); };
+el("export").onclick = () => {
+  const cols = tabs[active].views[states[active].view];
+  const cell = value => {
+    const safe = /^[=+@\-\t\r]/.test(value) && Number.isNaN(Number(value)) ? "'" + value : value;
+    return '"' + safe.replaceAll('"', '""') + '"';
+  };
+  const lines = [cols.map(([, title]) => cell(title)).join(","),
+    ...matching.map(row => cols.map(([field, , display]) => cell(row[field] == null ? "" :
+      typeof row[field] === "number" && !field.endsWith("Tu") ? String(row[field]) : display(row))).join(","))];
+  const url = URL.createObjectURL(new Blob(["\ufeff", lines.join("\r\n")], {type:"text/csv;charset=utf-8"}));
+  const link = node("a");
+  link.href = url;
+  link.download = "oxce-" + active + ".csv";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+el("sources").textContent = "Rulesets: " + data.sources.join(" → ");
+showTab(active);
+</script>
+</html>
